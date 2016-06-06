@@ -175,13 +175,13 @@ Ipv4StaticRoutingHelper ipv4RoutingHelper;
 
 
     source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
-  ApplicationContainer sourceApps = source.Install (rnC.Get (1));
+  ApplicationContainer sourceApps = source.Install (c.Get(2));
   sourceApps.Start (Seconds (0.0));
   sourceApps.Stop (Seconds (100.0));
 
   PacketSinkHelper sink ("ns3::TcpSocketFactory",
                          InetSocketAddress (Ipv4Address::GetAny (), port));
-  ApplicationContainer sinkApps = sink.Install (nAr.Get(0));
+  ApplicationContainer sinkApps = sink.Install (c.Get(0));
   sinkApps.Start (Seconds (0.0));
   sinkApps.Stop (Seconds (100.0));
 
@@ -207,7 +207,7 @@ Ipv4StaticRoutingHelper ipv4RoutingHelper;
   for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
     {
 	  Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-      if ((t.sourceAddress==addrC && t.destinationAddress == addrr2))
+      if ((t.sourceAddress==addrC && t.destinationAddress == addrA))
       {
           std::cout << "Flow " << i->first  << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
           std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
