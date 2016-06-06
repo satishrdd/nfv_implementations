@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
         Ipv4Address addrA = iaddr.GetLocal (); 
           iaddr = ipv4C->GetAddress (1,0);
         Ipv4Address addrC = iaddr.GetLocal (); 
-          iaddr = ipv4r->GetAddress (3,0);
+          iaddr = ipv4r->GetAddress (1,0);
           //iaddr1 = ipv4r->GetAddress (2,0);
         Ipv4Address addrr = iaddr.GetLocal ();		//interface of rA
         iaddr = ipv4r->GetAddress (2,0); 
