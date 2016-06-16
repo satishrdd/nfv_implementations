@@ -1,45 +1,141 @@
-#include<vector>
-#include<algorithm>
-#include<map>
-#include <fstream>
-#include <string>
-#include <cassert>
-#include "ns3/core-module.h"
-#include "ns3/network-module.h"
-#include "ns3/internet-module.h"
-#include "ns3/point-to-point-module.h"
-#include "ns3/csma-module.h"
-#include "ns3/applications-module.h"
-#include "ns3/ipv4-static-routing-helper.h"
+#include <iostream>
+#include <map>
+ #include <fstream>
+ #include <string>
+ #include <cassert>
+#include <vector>
+
+ #include "ns3/core-module.h"
+ #include "ns3/network-module.h"
+  #include "ns3/internet-module.h"
+ #include "ns3/point-to-point-module.h"
+ #include "ns3/csma-module.h"
+ #include "ns3/applications-module.h"
+ #include "ns3/ipv4-static-routing-helper.h"
 #include "ns3/packet-sink.h"
 #include "ns3/flow-monitor-module.h"
+#include <stack>
+#include <queue>
+#define cachesize 4
 
-using namespace ns3;
-NS_LOG_COMPONENT_DEFINE ("OfflineCachingTest");
-#define cachesize 4;
-int t;
-int hitrate=0;
+#define prweight 7
+#define cloneweight 3
 
 
 
+double minrank=0; 
+int hitrate =0;
+  using namespace ns3;
+
+
+std::vector<std::string> cache;
+std::vector<std::string> v;
+std::map<std::string, int> clonetime;
+std::map<std::string, int> priority;
+std::map<std::string, int> location;
+std::map<std::string, double> rank;
+
+
+
+void update(std::string s){
+	int flag=1;
+	int pos=0;
+	int vnfflag=0;
+	
+
+	for(int i=0;i<v.size();i++){
+		if(v[i]==s){
+			vnfflag=1;
+			break;
+		}
+	}
+
+	if(vnfflag==0){
+		std::cout<<"This vnf is not available";
+		//break;
+	}
+
+	
+	for(int i=0;i<cache.size();i++){
+		//cout<<"re"<<endl;
+		if(cache.size()==0){
+			flag=1;
+			break;
+		}
+
+			if(cache[i]==s){
+			flag=0;
+			pos =i;
+			break;
+		}
+	}
+
+	if(flag==1){
+		std::cout<<"VNF not there in cache\n";
+		if(cache.size()==cachesize){
+			int pos1 = 0;
+			minrank = rank[cache[0]];
+			for(int i=1;i<cachesize;i++){
+				if(rank[cache[i]]<minrank){
+					minrank  = rank[cache[i]];
+					pos1 = i;
+				}
+			}
+			std::string temp = cache[pos1];
+			cache[pos1] = cache[cachesize-1];
+			cache[cachesize-1] = temp;
+
+			location[cache[cache.size()-1]] = 2;
+			cache.pop_back();
+			std::vector<std::string>::iterator it;
+
+  			it = cache.begin();
+			cache.insert(it,s);
+			location[s] = 3;
+			for(int i=0;i<cachesize;i++){
+				rank[cache[i]] = rank[cache[i]] - minrank;
+			}
+			std::cout<<"cache was full least rank removed\n";
+
+			
+		}else if(cache.empty()){
+			std::cout<<"cache is empty first insertion\n";
+			cache.push_back(s);
+			location[s] =3;
+			
+		}else{
+			std::cout<<"cache is not full inserted at beginning\n";
+			  std::vector<std::string>::iterator it;
+			it = cache.begin();
+			cache.insert(it,s);
+			location[s]=3;
+			
+
+		}
+	}else{
+
+		std::cout<<"vnf present in cache moved to front\n";
+		rank[cache[pos]] = clonetime[cache[pos]]*cloneweight + priority[cache[pos]]*prweight; 
+		hitrate++;
+	}
+
+}
 
 
 int main(int argc, char  *argv[])
 {
 	/* code */
+
 	uint32_t maxBytes = 0;
 	bool tracing = false;
 	CommandLine cmd;
 	cmd.AddValue ("tracing", "Flag to enable/disable tracing", tracing);
-    cmd.AddValue ("maxBytes",
+  cmd.AddValue ("maxBytes",
                 "Total number of bytes for application to send", maxBytes);
 	cmd.Parse(argc,argv);
 
 
-	std::vector<std::string> cache;
-	std::vector<std::string> v;
-	std::map<std::string, int> clonetime;
-	std::map<std::string, int> location;
+	std::string s;
 	v.clear();
 	v.push_back("v1");
 	v.push_back("v2");
@@ -52,47 +148,48 @@ int main(int argc, char  *argv[])
 	v.push_back("vf1");
 	v.push_back("v10");
 
-	for(int i=0;i<v.size();i++){
-		clonetime[v[i]] = i+1;					//created a map to clone times
-	}
-
-
-	int ar[10];
-	for(int i=0;i<10;i++){
-		ar[i] =i;
-	}
-
+	std::string tempo[v.size()];
+	double ran[v.size()];
+	
+	
 	srand(time(NULL));
-	for(int i=0;i<10;i++){
-
-		int j = rand()%10;
-		if(i!=j){
-			swap(v[ar[i]],v[ar[j]]);
-		}
-	}
-	
 	cache.clear();
-	
-	cache.push_back(v[0]);
-	cache.push_back(v[1]);
-	cache.push_back(v[2]);
-	cache.push_back(v[3]);
+	for(int i=0;i<v.size();i++){
+		clonetime[v[i]] = (rand()%3+1)*10;
+		priority[v[i]] = (rand()%14)*5;
+							//created a map to clone times
+	}
+	priority["vf1"] = 80;
 
-	std::cout<<cache[0]<<" "<<cache[1]<<" "<<cache[2]<<" "<<cache[3]<<std::endl;
-	t=0;
+	rank[v[0]] = clonetime[v[0]]*cloneweight + priority[v[0]]*prweight; 
+		ran[0] = rank[v[0]];
+		tempo[0] = v[0];
+		minrank = rank[v[0]];
+	for(int i=0;i<v.size();i++){
+		rank[v[i]] = clonetime[v[i]]*cloneweight + priority[v[i]]*prweight; 
+		ran[i] = rank[v[i]];
+		tempo[i] = v[i];
+		if(rank[v[i]] < minrank){
+			minrank = rank[v[i]];
+		}
+		std::cout<<rank[v[i]]<<std::endl;
+	}
+
 	int no;
 	int firewallflag=0;
 
 	std::cout<<"Enter vnfs needed should ne less than 10\n";
 	std::cin>>no;
 	std::string req[no];
+	
 	double t[no];
 	double simulationtime=0,maxalivetime=0;
 	std::cout<<"Enter vnf name and alive times of each\n";
 	for(int i=0;i<no;i++){
 		std::cin>>req[i];
 		std::cin>>t[i];
-		if(req[i]=="vf2"||req[i]=="vf1"){
+		
+		if(req[i]=="vf1"){
 			firewallflag=1;
 		}
 		if(t[i]>maxalivetime){
@@ -101,6 +198,28 @@ int main(int argc, char  *argv[])
 		simulationtime += t[i];
 	}
 
+
+	//std::cout<<"Hello";
+
+	for(int j=1;j<v.size();j++){
+		double key = ran[j];
+		std::string st = tempo[j];
+		int i =j-1;
+		while(i>=0 && ran[i]>key){
+			ran[i+1] = ran[i];
+			tempo[i+1] = tempo[i]; 
+			i--;
+		}
+		ran[i+1] = key;
+		tempo[i+1] = st;
+	}
+
+//std::cout<<"Hello";
+
+	for(int i=0;i<cachesize;i++){
+		cache.push_back(tempo[v.size()-cachesize+i]);
+	}
+//std::cout<<"Hello";
 	Ptr<Node> nA = CreateObject<Node> ();
 	Ptr<Node> r = CreateObject<Node> ();
 	Ptr<Node> nC = CreateObject<Node> ();
@@ -130,7 +249,6 @@ int main(int argc, char  *argv[])
     NetDeviceContainer dAdr = p2p1.Install(nAr);
     NetDeviceContainer drcache = p2p1.Install(rncache);
     NetDeviceContainer drdC = p2p.Install(rnC);
-
 
 
 
@@ -175,24 +293,11 @@ int main(int argc, char  *argv[])
 
 
 
-	if(firewallflag==0){
-					//only 3 cases;
-		int poolflag=0,cacheflag=0;
-		for(int i=0;i<no;i++){
-			for(int j=0;j<4;j++)
-				if(req[i]==cache[j]){
-					cacheflag=1;
-					location[req[i]]=2;
-          hitrate++;
-				}else{
-					poolflag=1;
-					location[req[i]]=3;
-				}
-		}
 
+	if(firewallflag==0){
 	
 
-    	Ipv4StaticRoutingHelper ipv4RoutingHelper;
+		Ipv4StaticRoutingHelper ipv4RoutingHelper;
      
 
      	Ptr<Ipv4StaticRouting> staticRoutingC = ipv4RoutingHelper.GetStaticRouting(ipv4C);
@@ -206,55 +311,92 @@ int main(int argc, char  *argv[])
 
       	Ptr<Ipv4StaticRouting> staticRoutingcache = ipv4RoutingHelper.GetStaticRouting(ipv4cache);
      	staticRoutingcache->AddHostRouteTo(addrA,addrr1,1);
-     	//staticRoutingA->SetDefaultRoute(addrr,1);
 
-		for(int i=0;i<no;i++){
-			uint16_t port =i+9;
-        	BulkSendHelper source ("ns3::TcpSocketFactory",
+     	for(int i=0;i<no;i++){
+     		update(req[i]);
+     	}
+     	//std::cout<<"Hello";
+     	for(int i=0;i<no;i++){
+     		 uint16_t port =9+i;
+			if(location[req[i]]==2){
+		//	std::cout<<"Hello";
+    		BulkSendHelper source ("ns3::TcpSocketFactory",
                          InetSocketAddress (addrA, port));
-			source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
-  			ApplicationContainer sourceApps = source.Install (c.Get(location[req[i]]));
-  			sourceApps.Start (Seconds (0.0));
+
+
+    		source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
+  			ApplicationContainer sourceApps = source.Install (c.Get(2));
+ 		 	sourceApps.Start (Seconds (0.0));
   			sourceApps.Stop (Seconds (t[i]));
-			PacketSinkHelper sink ("ns3::TcpSocketFactory",InetSocketAddress (Ipv4Address::GetAny (), port));
+
+  			PacketSinkHelper sink ("ns3::TcpSocketFactory",
+                         InetSocketAddress (Ipv4Address::GetAny (), port));
   			ApplicationContainer sinkApps = sink.Install (c.Get(0));
   			sinkApps.Start (Seconds (0.0));
   			sinkApps.Stop (Seconds (t[i]));
+			}else{
+				std::cout<<"Hello1\n";
+				BulkSendHelper source ("ns3::TcpSocketFactory",
+                         InetSocketAddress (addrA, port));
+
+
+    		source.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
+  			ApplicationContainer sourceApps = source.Install (c.Get(2));
+ 		 	sourceApps.Start (Seconds (0.0));
+  			sourceApps.Stop (Seconds (clonetime[req[i]]));
+
+  			PacketSinkHelper sink ("ns3::TcpSocketFactory",
+                         InetSocketAddress (Ipv4Address::GetAny (), port));
+  			ApplicationContainer sinkApps = sink.Install (c.Get(0));
+  			sinkApps.Start (Seconds (0.0));
+  			sinkApps.Stop (Seconds (clonetime[req[i]]));
+
+  			BulkSendHelper source1 ("ns3::TcpSocketFactory",
+                         InetSocketAddress (addrA, port));
+
+
+    		source1.SetAttribute ("MaxBytes", UintegerValue (maxBytes));
+  			ApplicationContainer sourceApps1 = source1.Install (c.Get(3));
+ 		 	sourceApps1.Start (Seconds (clonetime[req[i]]));
+  			sourceApps1.Stop (Seconds (t[i]));
+
+  			PacketSinkHelper sink1 ("ns3::TcpSocketFactory",
+                         InetSocketAddress (Ipv4Address::GetAny (), port));
+  			ApplicationContainer sinkApps1 = sink1.Install (c.Get(0));
+  			sinkApps1.Start (Seconds (clonetime[req[i]]));
+  			sinkApps1.Stop (Seconds (t[i]));
+
+  			//std::cout<<"Hello1\n";
+
+			}
+			//std::cout<<"Hello1\n";
+			
+  			//std::cout<<"Hello1\n";
+  	 		
+
+   		
   		}
-		FlowMonitorHelper flowmon;
-  		Ptr<FlowMonitor> monitor = flowmon.InstallAll();
+  		FlowMonitorHelper flowmon;
+  			Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
-
-  	    Simulator::Stop (Seconds (maxalivetime));
-  		Simulator::Run ();
-
- 		monitor->CheckForLostPackets ();
-
-    	Ptr<Ipv4FlowClassifier> classifier = DynamicCast<Ipv4FlowClassifier> (flowmon.GetClassifier ());
-  		std::map<FlowId, FlowMonitor::FlowStats> stats = monitor->GetFlowStats ();
-  		for (std::map<FlowId, FlowMonitor::FlowStats>::const_iterator i = stats.begin (); i != stats.end (); ++i)
-    	{
-	  		Ipv4FlowClassifier::FiveTuple t = classifier->FindFlow (i->first);
-      		if ((t.sourceAddress==addrC && t.destinationAddress == addrA))
-     		{
-          		std::cout << "Flow " << i->first  << " (" << t.sourceAddress << " -> " << t.destinationAddress << ")\n";
-          		std::cout << "  Tx Bytes:   " << i->second.txBytes << "\n";
-          		std::cout << "  Rx Bytes:   " << i->second.rxBytes << "\n";
-      	  		std::cout << "  Throughput: " << i->second.rxBytes * 8.0 / (i->second.timeLastRxPacket.GetSeconds() - i->second.timeFirstTxPacket.GetSeconds())/1024/1024  << " Mbps\n";
+  		Simulator::Stop (Seconds (maxalivetime));
+  			Simulator::Run ();
+  			monitor->CheckForLostPackets ();
+  			monitor->SerializeToXmlFile("algo.flowmon", true, true);
+  		Simulator::Destroy ();
+	}else{
+		for(int i=0;i<no;i++){
+     		update(req[i]);
+     	}
+     	int fl = 0;
+     	for(int i=0;i<cache.size();i++){
+     		if(cache[i]=="vf1"){
+     			fl=1;
+     			break;
      		}
      	}
 
-
-
-
-
-  		monitor->SerializeToXmlFile("offline.flowmon", true, true);
-
-   		Simulator::Destroy ();
-
-	}
-	else{									//4 cases
-			if(cache[0]=="vf1"||cache[1]=="vf1"||cache[2]=="vf1"||cache[3]=="vf1")
+     	if(fl==1)
 			{
 				Ipv4StaticRoutingHelper ipv4RoutingHelper;
 			    Ptr<Ipv4StaticRouting> staticRoutingC = ipv4RoutingHelper.GetStaticRouting(ipv4C);
@@ -273,7 +415,7 @@ int main(int argc, char  *argv[])
      			staticRoutingcache->AddHostRouteTo(addrA,addrr1,1);
   
      			for(int i=0;i<no;i++){
-     				if(req[i]!="vf1"&&req[i]!="vf2"){
+     				if(req[i]!="vf1"){
 						uint16_t port =9+i,port1=45+i;
 
         				BulkSendHelper source ("ns3::TcpSocketFactory",InetSocketAddress (addrcache, port));
@@ -306,9 +448,9 @@ int main(int argc, char  *argv[])
   	 			Simulator::Stop (Seconds (maxalivetime));
   				Simulator::Run ();
   				monitor->CheckForLostPackets ();
-  				monitor->SerializeToXmlFile("offline.flowmon", true, true);
+  				monitor->SerializeToXmlFile("algo.flowmon", true, true);
 
-   		Simulator::Destroy ();
+   				Simulator::Destroy ();
 
 			}
 			else{
@@ -365,14 +507,18 @@ int main(int argc, char  *argv[])
   	 		Simulator::Stop (Seconds (maxalivetime));
   			Simulator::Run ();
   			monitor->CheckForLostPackets ();
-  			monitor->SerializeToXmlFile("offline.flowmon", true, true);
+  			monitor->SerializeToXmlFile("algo.flowmon", true, true);
 
    		Simulator::Destroy ();
 
 
 
-			}}
+			}
 
-std::cout<<hitrate<<std::endl;
+
+	}
+
+
+	std::cout<<hitrate<<std::endl;
 	return 0;
 }

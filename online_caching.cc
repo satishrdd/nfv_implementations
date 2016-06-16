@@ -21,6 +21,9 @@
 #define cloneweight 3
 
 
+int hitrate =0;
+
+
 
 double minrank=0; 
   using namespace ns3;
@@ -98,6 +101,7 @@ void update(std::string s){
 			cache[i] = cache[i-1];
 			cache[i-1] = temp;
 		}
+		hitrate++;
 	}
 
 
@@ -319,7 +323,9 @@ int main(int argc, char  *argv[])
 
 			}
 
-			FlowMonitorHelper flowmon;
+			
+  		}
+  		FlowMonitorHelper flowmon;
   			Ptr<FlowMonitor> monitor = flowmon.InstallAll();
 
 
@@ -329,7 +335,6 @@ int main(int argc, char  *argv[])
   			monitor->SerializeToXmlFile("algo.flowmon", true, true);
 
    		Simulator::Destroy ();
-  		}
 	}else{
 		for(int i=0;i<no;i++){
      		update(req[i]);
@@ -464,7 +469,7 @@ int main(int argc, char  *argv[])
 
 	}
 
-
+	std::cout<<hitrate<<std::endl;
 
 	return 0;
 }
