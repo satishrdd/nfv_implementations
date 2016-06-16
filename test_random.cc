@@ -247,7 +247,7 @@ int main(int argc, char  *argv[])
 
 
 
-  		monitor->SerializeToXmlFile("offline.flowmon", true, true);
+  		monitor->SerializeToXmlFile("test1.flowmon", true, true);
 
    		Simulator::Destroy ();
 
@@ -305,7 +305,7 @@ int main(int argc, char  *argv[])
   	 			Simulator::Stop (Seconds (maxalivetime));
   				Simulator::Run ();
   				monitor->CheckForLostPackets ();
-  				monitor->SerializeToXmlFile("offline.flowmon", true, true);
+  				monitor->SerializeToXmlFile("test1.flowmon", true, true);
 
    		Simulator::Destroy ();
 
@@ -364,7 +364,7 @@ int main(int argc, char  *argv[])
   	 		Simulator::Stop (Seconds (maxalivetime));
   			Simulator::Run ();
   			monitor->CheckForLostPackets ();
-  			monitor->SerializeToXmlFile("offline.flowmon", true, true);
+  			monitor->SerializeToXmlFile("test1.flowmon", true, true);
 
    		Simulator::Destroy ();
 
