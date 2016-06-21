@@ -101,6 +101,16 @@ int main(int argc, char  *argv[])
 		simulationtime += t[i];
 	}
 
+
+
+    for(int i=0;i<no;i++){
+      for(int j=0;j<4;j++)
+        if(req[i]==cache[j]){
+          hitrate++;
+          
+        }
+    }
+
 	Ptr<Node> nA = CreateObject<Node> ();
 	Ptr<Node> r = CreateObject<Node> ();
 	Ptr<Node> nC = CreateObject<Node> ();
@@ -183,7 +193,7 @@ int main(int argc, char  *argv[])
 				if(req[i]==cache[j]){
 					cacheflag=1;
 					location[req[i]]=2;
-          hitrate++;
+          
 				}else{
 					poolflag=1;
 					location[req[i]]=3;
@@ -373,6 +383,6 @@ int main(int argc, char  *argv[])
 
 			}}
 
-std::cout<<hitrate<<std::endl;
+std::cout<<(double)hitrate/(double)no<<std::endl;
 	return 0;
 }
