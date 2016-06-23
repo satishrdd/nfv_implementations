@@ -1,6 +1,6 @@
  #include <iostream>
  #include <fstream>
- #include <string>
+ #include <cstring>
  #include <cassert>
 
  #include "ns3/core-module.h"
@@ -128,4 +128,4 @@ int main(int argc, char *argv[])
 
 
    return 0;
-}
+}  

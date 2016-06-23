@@ -72,7 +72,7 @@
 
    uint16_t port = 4000;  //
    UdpServerHelper server (port);
-  ApplicationContainer apps = server.Install (NodeContainer(user));
+  ApplicationContainer apps = server.Install (NodeContainer(pool));
   apps.Start (Seconds (1.0));
   apps.Stop (Seconds (10.0));
 

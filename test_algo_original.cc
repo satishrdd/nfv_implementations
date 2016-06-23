@@ -519,6 +519,6 @@ int main(int argc, char  *argv[])
 	}
 
 
-	std::cout<<hitrate<<std::endl;
+	std::cout<<(double)hitrate/(double)no<<std::endl;
 	return 0;
 }

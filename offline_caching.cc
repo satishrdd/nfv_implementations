@@ -11,7 +11,7 @@
  #include "ns3/applications-module.h"
  #include "ns3/ipv4-static-routing-helper.h"
   using namespace ns3;
-NS_LOG_COMPONENT_DEFINE ("NoCacheTest");
+NS_LOG_COMPONENT_DEFINE ("OfflineCachingTest");
 
 
 
@@ -44,10 +44,14 @@ int main(int argc, char *argv[])
    p2p.SetDeviceAttribute("DataRate",StringValue("1Gb/s"));
    p2p.SetChannelAttribute("Delay",StringValue("2ms"));
 
+      PointToPointHelper p2p1;
+   p2p1.SetDeviceAttribute("DataRate",StringValue("10Gb/s"));
+   p2p1.SetChannelAttribute("Delay",StringValue("2ms"));
+
    NetDeviceContainer dAdr = p2p.Install(nAr);
    NetDeviceContainer drdC =  p2p.Install(rnC);
   NetDeviceContainer drdcache =  p2p.Install(rncache);
-  NetDeviceContainer dcachedA =  p2p.Install(ncachenA);
+  NetDeviceContainer dcachedA =  p2p1.Install(ncachenA);
 
 
 

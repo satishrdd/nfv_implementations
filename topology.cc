@@ -49,8 +49,8 @@ int main(int argc, char *argv[])
     p2p1.SetChannelAttribute("Delay",StringValue("2ms"));
 
 
-    NodeContainer c1 = NodeContainer(nu1,nu2,r,r1,r2);
-    NodeContainer c2 =NodeContainer(nC,ncache1,ncache2);
+    NodeContainer c1 = NodeContainer(nC,r,ncache1,nu1);
+    NodeContainer c2 =NodeContainer(nC,r2,ncache2,nu2);
 
     InternetStackHelper internet ;
     internet.Install(c1);
@@ -191,8 +191,6 @@ int main(int argc, char *argv[])
         Ptr<Ipv4StaticRouting> staticRoutingrcache2 = ipv4RoutingHelper.GetStaticRouting(ipv4cache2);
        staticRoutingrcache2->AddHostRouteTo(addru2,addrr2_2,1);
        staticRoutingrcache2->AddHostRouteTo(addrc,addrr2_2,1);
-   Simulator::Stop (Seconds(100.0));
-      Simulator::Run ();
-
+   
 	return 0;
 }

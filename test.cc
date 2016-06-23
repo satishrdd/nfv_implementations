@@ -23,10 +23,10 @@
     using namespace ns3;
     
     NS_LOG_COMPONENT_DEFINE ("SimpleRoutingPing6Example");
-    
-    class StackHelper
+    																		
+    class StackHelper  								//to print the routing table
     {
-    public:
+    public:			
     
       inline void AddAddress (Ptr<Node>& n, uint32_t interface, Ipv6Address address)
       {
@@ -76,7 +76,7 @@
     StackHelper stackHelper;
     std::vector<std::pair<std::string,int> > vnfs;
 
-   	std::pair<std::string,int> pa;
+   	std::pair<std::string,int> pa;			//for vnf's and their processing times
 
    	vnfs.push_back(std::make_pair("proxy",0));
    	vnfs.push_back(std::make_pair("firewall",0));
@@ -104,39 +104,28 @@
    
      NS_LOG_INFO ("Create channels.");
      CsmaHelper csma;
-     csma.SetChannelAttribute ("DataRate", DataRateValue (10000000));
+     csma.SetChannelAttribute ("DataRate", DataRateValue (DataRate("1Gb/s")));
      csma.SetChannelAttribute ("Delay", TimeValue (MilliSeconds (2)));
+     csma.SetDeviceAttribute ("Mtu", UintegerValue (1400));
+
+     
     NetDeviceContainer d1 = csma.Install (net1);
      NetDeviceContainer d2 = csma.Install (net2);
    
      NS_LOG_INFO ("Create networks and assign IPv6 Addresses.");
      Ipv6AddressHelper ipv6;
-     ipv6.SetBase (Ipv6Address ("2001:1::"), Ipv6Prefix (64));
+     ipv6.SetBase (Ipv6Address ("10:1::"), Ipv6Prefix (64));
      Ipv6InterfaceContainer i1 = ipv6.Assign (d1);
      i1.SetForwarding (1, true);
      i1.SetDefaultRouteInAllNodes (1);
-     ipv6.SetBase (Ipv6Address ("2001:2::"), Ipv6Prefix (64));
+     ipv6.SetBase (Ipv6Address ("10:2::"), Ipv6Prefix (64));
      Ipv6InterfaceContainer i2 = ipv6.Assign (d2);
-    i2.SetForwarding (0, true);
+     i2.SetForwarding (0, true);
      i2.SetDefaultRouteInAllNodes (0);
    
      stackHelper.PrintRoutingTable (pool);
-   
-     /* Create a Ping6 application to send ICMPv6 echo request from pool to user via r */
-     uint32_t packetSize = 1024;
-     uint32_t maxPacketCount = 5;
-     Time interPacketInterval = Seconds (1.);
-     Ping6Helper ping6;
-   
-     ping6.SetLocal (i1.GetAddress (0, 1));
-     ping6.SetRemote (i2.GetAddress (1, 1)); 
-   
-     ping6.SetAttribute ("MaxPackets", UintegerValue (maxPacketCount));
-     ping6.SetAttribute ("Interval", TimeValue (interPacketInterval));
-     ping6.SetAttribute ("PacketSize", UintegerValue (packetSize));
-     ApplicationContainer apps = ping6.Install (net1.Get (0));
-     apps.Start (Seconds (2.0));
-     apps.Stop (Seconds (20.0));
+   	 
+     
    
      AsciiTraceHelper ascii;
      csma.EnableAsciiAll (ascii.CreateFileStream ("simple-routing-ping6.tr"));

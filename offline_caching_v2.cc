@@ -64,11 +64,12 @@ int main(int argc, char *argv[])
                 "Total number of bytes for application to send", maxBytes);
 	cmd.Parse(argc,argv);
 
-	StackHelper stackhelper;
+//	StackHelper stackhelper;
 	//create nodes
 
 	Ptr<Node> nA = CreateObject<Node> ();
-	Ptr<Node> r = CreateObject<Node> ();
+	Ptr<Node> r_1 = CreateObject<Node> ();
+	Ptr<Node> r_2 = CreateObject<Node> ();
 	Ptr<Node> nC = CreateObject<Node> ();
 	Ptr<Node> ncache = CreateObject<Node>();
 
@@ -79,23 +80,25 @@ int main(int argc, char *argv[])
       CsmaHelper p2p1;
    p2p1.SetChannelAttribute("DataRate",StringValue("10Gbps"));
    p2p1.SetChannelAttribute("Delay",StringValue("2ms"));
+   																						//c--->r_1-->cache-->r_2-->A
 
-
-   NodeContainer c = NodeContainer(nA,r,nC,ncache);
+   NodeContainer c = NodeContainer(nA,r_1,r_2,nC,ncache);
 
    InternetStackHelper internet ;
    internet.Install(c);
 
 
-   NodeContainer nAr  =  NodeContainer(nA,r);
-   NodeContainer rnC =  NodeContainer(r,nC) ;
-   NodeContainer rncache= NodeContainer(r,ncache);
+   NodeContainer nCr_1  =  NodeContainer(nC,r_1);
+   NodeContainer r_1ncache =  NodeContainer(r_1,ncache) ;
+   NodeContainer r_2ncache= NodeContainer(r_2,ncache);
+   NodeContainer r_2nA = NodeContainer(r_2,nA);
 
 
 
-   NetDeviceContainer dAdr = p2p1.Install(nAr);
-   NetDeviceContainer drcache = p2p1.Install(rncache);
-   NetDeviceContainer drdC = p2p.Install(rnC);
+   NetDeviceContainer dAdr_2 = p2p1.Install(r_2nA);
+   NetDeviceContainer dr_1dcache = p2p1.Install(r_1ncache);
+   NetDeviceContainer dcachedr_2 = p2p1.Install(r_2ncache);
+   NetDeviceContainer dr_1dC = p2p.Install(nCr_1);
 
 
 
@@ -103,22 +106,42 @@ int main(int argc, char *argv[])
    
    Ipv4AddressHelper ipv4;
    ipv4.SetBase("10.1.1.0","255.255.255.0");
-   Ipv4InterfaceContainer iar;
-   iar= ipv4.Assign(dAdr);
+   Ipv4InterfaceContainer iar_2;
+   iar_2= ipv4.Assign(dAdr_2);
 
    ipv4.SetBase("10.1.2.0","255.255.255.0");
-    Ipv4InterfaceContainer ircache;
-    ircache = ipv4.Assign(drcache);
+    Ipv4InterfaceContainer ir_1cache;
+    ir_1cache = ipv4.Assign(dr_1dcache);
 
 	ipv4.SetBase("10.1.3.0","255.255.255.0");
-    Ipv4InterfaceContainer irc;
-    irc = ipv4.Assign(drdC);
+    Ipv4InterfaceContainer icacher_2;
+    icacher_2= ipv4.Assign(dcachedr_2);
+
+    ipv4.SetBase("10.1.4.0","255.255.255.0");
+    Ipv4InterfaceContainer icr_1;
+    icr_1= ipv4.Assign(dr_1dC);
 
 
     Ptr<Ipv4> ipv4A = nA->GetObject<Ipv4>();
-     Ptr<Ipv4> ipv4r = r->GetObject<Ipv4>();
+     Ptr<Ipv4> ipv4r_1 = r_1->GetObject<Ipv4>();
+     Ptr<Ipv4> ipv4r_2= r_2->GetObject<Ipv4>();
      Ptr<Ipv4> ipv4C = nC->GetObject<Ipv4>();
      Ptr<Ipv4> ipv4cache = ncache->GetObject<Ipv4>();  
+
+
+
+     Ipv4InterfaceAddress iaddr = ipv4A->GetAddress(1,0);
+     Ipv4Address addrA = iaddr.GetLocal();
+      iaddr = ipv4C->GetAddress(1,0);
+     Ipv4Address addrC = iaddr.GetLocal();
+
+
+
+
+
+     //done till here
+
+/*
 
       Ipv4InterfaceAddress iaddr = ipv4cache->GetAddress (1,0);
         Ipv4Address addrcache = iaddr.GetLocal (); 
@@ -128,7 +151,7 @@ int main(int argc, char *argv[])
         Ipv4Address addrA = iaddr.GetLocal (); 
           iaddr = ipv4C->GetAddress (1,0);
         Ipv4Address addrC = iaddr.GetLocal (); 
-          iaddr = ipv4r->GetAddress (1,0);
+          iaddr = ipv4r->GetAddress (3,0);
           //iaddr1 = ipv4r->GetAddress (2,0);
         Ipv4Address addrr = iaddr.GetLocal ();		//interface of rA
         iaddr = ipv4r->GetAddress (2,0); 
@@ -224,6 +247,6 @@ Ipv4StaticRoutingHelper ipv4RoutingHelper;
   NS_LOG_INFO ("Done.");
 
   Ptr<PacketSink> sink1 = DynamicCast<PacketSink> (sinkApps.Get (0));
-  std::cout << "Total Bytes Received: " << sink1->GetTotalRx () << std::endl;
+  std::cout << "Total Bytes Received: " << sink1->GetTotalRx () << std::endl;*/
 	return 0;
 }
